@@ -1,245 +1,95 @@
-nclude "shell.h"
+#include "shell.h"
 
 /**
- *
- *  * _setEnviron - set environment value
- *
- *   * @ptrEnv: environment linked list
- *
- *    * @ptrName: environment name
- *
- *     * @ptrV: environment value
- *
- *      * @ptrOW: overwrite
- *
- *       */
+ * _printEnviron - prints environ variables
+ * @_Env: variable list
+ */
 
-
-
-void _setEnviron(serverEnv_t *ptrEnv, char *ptrName, char *ptrV, int ptrOW)
-
+void _printEnviron(serverEnv_t *_Env)
 {
+if (_Env == NULL)
+return;
 
-	serverEnv_t *e_node;
-
-	char *tmp;
-
-
-
-	if (ptrName == NULL || ptrV == NULL)
-
-		return;
-
-
-
-	e_node = _getenv(ptrEnv, ptrName);
-
-
-
-	if (e_node == NULL)
-
-	{tmp = _genGlobal(ptrName, ptrV);
-
-		_AddNodeEnd(&ptrEnv, tmp);
-
-		free(tmp);
-
-	}
-
-	else if (ptrOW == 1)
-
-	{
-
-		free(e_node->value);
-
-		e_node->value = _strdup(ptrV);
-
-	}
-
+_write(_Env->pathName);
+_write("=");
+if (_Env->value != NULL)
+_write(_Env->value);
+_write("\n");
+_printEnviron(_Env->next);
 }
 
-
-
 /**
+ * _Environ - prints the environ variable
  *
- *  * _cDir - change current directory
- *
- *   * @ptrData: data structure
- *
- *    */
+ * @ptr: data structure
+ */
 
-
-
-void _cDir(server_t *ptrData)
-
+void _Environ(server_t *ptr)
 {
-
-		char cD[500];
-
-
-
-			getcwd(cD, 500);
-
-
-
-				if (ptrData == NULL)
-
-							return;
-
-
-
-					if (
-
-									!ptrData->argument[1] ||
-
-											_strcmp(ptrData->argument[1], "~") == 0 ||
-
-													_strcmp(ptrData->argument[1], "~/") == 0
-
-														)
-
-								_cDHome(ptrData, cD);
-
-						else if (_strcmp(ptrData->argument[1], "-") == 0)
-
-									_cD_prev(ptrData, cD);
-
-							else
-
-										_RandomDir(ptrData, cD);
-
+_printEnviron(ptr->env);
 }
 
-
-
 /**
+ * _getenv - get environ variable
+ * @ptrEnv: head node
+ * @ptrName: variable name
  *
- *  * _cDHome - change to home directory
- *
- *   * @chptr - struct pointer
- *
- *    * @ptrCd - current directory
- *
- *     */
+ * return: variable node
+ */
 
-
-
-void _cDHome(server_t *chptr, char *ptrcd)
-
+serverEnv_t *_getenv(serverEnv_t *ptrEnv, char *ptrName)
 {
+if (ptrEnv == NULL)
+return (NULL);
 
-	serverEnv_t *newcdir;
+if (_strcmp(ptrEnv->pathName, ptrName) == 0)
+return (ptrEnv);
 
-
-
-	newcdir = _getenv(chptr->env, "Home");
-
-
-
-	if (access(newcdir->value, R_OK | W_OK) == 0)
-
-	{
-
-		chdir(newcdir->value);
-
-		_setEnviron(chptr->env, "OLDPWD", ptrcd, 1);
-
-	}
-
-	else
-
-	{
-
-		perror(newcdir->value);
-
-	}
-
+return (_getenv(ptrEnv->next, ptrName));
 }
 
-
-
 /**
+ * _EnvName - Returns the environ name
+ * @ptrVar: Name
  *
- *  * _cD_prev - change to previous directory
- *
- *   *
- *
- *    * @ptrD: data structure
- *
- *     * @ptrCurDir: current directory path
- *
- *      */
+ * Return: Environ name
+ */
 
-void _cD_prev(server_t *ptrD, char *ptrCurDir)
-
+char *_EnvName(char *ptrvar)
 {
+char **tptr, *name;
 
-	serverEnv_t *Directory;
+tptr = _strtow(ptrvar, "=", NULL);
 
+if (tptr == NULL)
+return (NULL);
 
+name = _strdup(tptr[0]);
+freeArgument(tptr);
+tptr = NULL;
 
-	Directory = _getenv(ptrD->env, "OLDPWD");
-
-
-
-	if (access(Directory->value, R_OK | W_OK) == 0)
-
-	{
-
-		chdir(Directory->value);
-
-		_setEnviron(ptrD->env, "OLDPWD", ptrCurDir, 1);
-
-	}
-
-	else
-
-	{
-
-		perror(Directory->value);
-
-	}
-
+return (name);
 }
 
-
-
 /**
+ * _EnvValue - return environ value
+ * @ptrVariable: name
  *
- *  * _RandomDir - change to any directory
- *
- *   *
- *
- *    * @varptr: data structure
- *
- *     * @curDir: current directory path
- *
- *      */
+ * Return: environ value
+ */
 
-void _RandomDir(server_t *varptr, char *curDir)
-
+char *EnvValue(char *ptrvariable)
 {
+char **cptr, *name;
 
-	char *Directory;
+cptr = _strtow(ptrvariable, "=", NULL);
 
+if (cptr == NULL)
+return(NULL);
 
+name = _strdup(cptr[1]);
+freeArgument(cptr);
+cptr = NULL;
 
-	Directory = varptr->argument[1];
-
-
-
-	if (access(Directory, R_OK | W_OK) == 0)
-
-	{
-
-		chdir(Directory);
-
-		_setEnviron(varptr->env, "OLDPWD", curDir, 1);
-
-	}
-
-	else
-
-		perror(Directory);
-
+return (name);
 }
