@@ -1,11 +1,6 @@
-nclude "shell.h"
-
-
+#include "shell.h"
 
 void print_prompt(void)
-
 {
-
-	_write("$ ");
-
+_write("$ ");
 }
